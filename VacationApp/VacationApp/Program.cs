@@ -12,6 +12,17 @@ using VacationApp.UI;
 
 namespace VacationApp
 {
+
+    // data container class to hold all app data
+    public class AppData
+    {
+        public List<Trip> Trips { get; set; } = new List<Trip>();
+        public List<Photo> Photos { get; set; } = new List<Photo>();
+        public List<Expense> Expenses { get; set; } = new List<Expense>();
+        public List<Note> Notes { get; set; } = new List<Note>();
+        public List<DailyLogEntry> DailyLogs { get; set; } = new List<DailyLogEntry>();
+        public AppSettings Settings { get; set; } = new AppSettings();
+    }
     class Program
     {
         // Manager classes (data/business logic)
@@ -30,40 +41,26 @@ namespace VacationApp
         private static DailyLogUI dailyLogUI;
         private static SettingsUI settingsUI;
 
-        private static string GetFullPath(string filename)
-        {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename);
-        }
+        // data file path
+        private static readonly string dataFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vacationapp_data.json");
         
-        // File paths for data storage
-        private static string tripsFilePath = GetFullPath("trips.json");
-        private static string photosFilePath = GetFullPath("photos.json");
-        private static string expensesFilePath = GetFullPath("expenses.json");
-        private static string notesFilePath = GetFullPath("notes.json");
-        private static string dailyLogsFilePath = GetFullPath("dailylogs.json");
-        
+        // main method
         static void Main(string[] args)
         {
-            Console.Title = "Vacation Tracker";
+            Console.Title = "Vacation Journal";
             
-            // Initialize all managers
             InitializeManagers();
             
-            // Initialize UI components
             InitializeUI();
             
-            // Load all data
             LoadData();
-            
-            // Apply settings (like dark mode if enabled)
-            ApplySettings();
             
             // Main application loop
             while (true)
             {
                 ShowMainMenu();
                 var selectedOption = SelectFromMenu(new string[] {
-                    "Trip Management",
+                    "Vacation Management",
                     "Photos Management",
                     "Expense Tracking",
                     "Notes",
@@ -76,6 +73,7 @@ namespace VacationApp
                 {
                     // Save data before exiting
                     SaveData();
+                    Console.WriteLine("Thanks for using the Vacation Journal!");
                     break;
                 }
             }
@@ -104,282 +102,133 @@ namespace VacationApp
             dailyLogUI = new DailyLogUI(dailyLogManager, tripManager);
             settingsUI = new SettingsUI(settingsManager);
         }
-        
-        // Apply settings to the application
-        static void ApplySettings()
-        {
-            var settings = settingsManager.GetSettings();
-            
-            // Apply dark mode if enabled
-            if (settings.DarkMode)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-            else
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.Gray;
-            }
-            
-            // Update file paths if custom save path is set
-            if (!string.IsNullOrEmpty(settings.DataSavePath))
-            {
-                string path = settings.DataSavePath;
-                
-                // Create directory if it doesn't exist
-                if (!Directory.Exists(path))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                    catch
-                    {
-                        // If directory creation fails, use default paths
-                        Console.WriteLine("Failed to create data directory. Using default paths.");
-                        return;
-                    }
-                }
-                
-                tripsFilePath = Path.Combine(path, "trips.json");
-                photosFilePath = Path.Combine(path, "photos.json");
-                expensesFilePath = Path.Combine(path, "expenses.json");
-                notesFilePath = Path.Combine(path, "notes.json");
-                dailyLogsFilePath = Path.Combine(path, "dailylogs.json");
-            }
-        }
-        
-        // Load all application data
+
+        // Load app data from JSON file
         static void LoadData()
         {
             Console.WriteLine("Loading data...");
-            Console.WriteLine($"Loading from: {Path.GetFullPath(tripsFilePath)}");
 
-            LoadTrips();
-            LoadPhotos();
-            LoadExpenses();
-            LoadNotes();
-            LoadDailyLogs();
-
-            Console.WriteLine($"Loaded {tripManager.GetAllTrips().Count} trips");
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
-        }
-        
-        // Save all application data
-        static void SaveData()
-        {
-            SaveTrips();
-            SavePhotos();
-            SaveExpenses();
-            SaveNotes();
-            SaveDailyLogs();
-        }
-        
-        // Load trips from JSON file
-        static void LoadTrips()
-        {
             try
             {
-                if (File.Exists(tripsFilePath))
+                if(System.IO.File.Exists(dataFilePath))
                 {
-                    string json = File.ReadAllText(tripsFilePath);
-                    Console.WriteLine($"Loaded JSON: {json}");
+                    string json = System.IO.File.ReadAllText(dataFilePath);
 
-                    var options = new JsonSerializerOptions
+                    // If the file is empty
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
-                        PropertyNameCaseInsensitive = true
-                    };
+                        var options = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
 
-                    var trips = JsonSerializer.Deserialize<List<Trip>>(json);
-                    Console.WriteLine($"Deserialized {trips?.Count ?? 0} trips");
+                        // Deserialize all data
+                        var appData = JsonSerializer.Deserialize<AppData>(json, options);
 
-                    tripManager.SetTrips(trips);
+                        if(appData != null)
+                        {
+                            // Place data in each manager
+                            tripManager.SetTrips(appData.Trips);
+                            photoManager.SetPhotos(appData.Photos);
+                            expenseManager.SetExpenses(appData.Expenses);
+                            noteManager.SetNotes(appData.Notes);
+                            dailyLogManager.SetDailyLogs(appData.DailyLogs);
+                            //settingsManager.SetSettings(appData.Settings);
+
+                            Console.WriteLine($"Loaded {appData.Trips.Count} vacations, " +
+                                                $"{appData.Photos.Count} photos, " +
+                                                $"{appData.Expenses.Count} expenses, " +
+                                                $"{appData.Notes.Count} notes, " +
+                                                $"{appData.DailyLogs.Count} daily logs");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Data file is empty. Starting with fresh data.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"File not located: {tripsFilePath}");
+                    Console.WriteLine("No existing data file found. Starting with fresh data.");
                 }
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                Console.WriteLine($"Error loading trips: {ex.Message}");
+                Console.WriteLine($"Error loading data: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine("Starting with fresh data.");
+            }
+
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+        }
+
+        // Save app data to JSON file
+        static void SaveData()
+        {
+            try
+            {
+                Console.WriteLine("Saving data...");
+
+                // Create container object with all data
+                var appData = new AppData
+                {
+                    Trips = tripManager.GetAllTrips(),
+                    Photos = photoManager.GetAllPhotos(),
+                    Expenses = expenseManager.GetAllExpenses(),
+                    Notes = noteManager.GetAllNotes(),
+                    DailyLogs = dailyLogManager.GetAllDailyLogs(),
+                    Settings = settingsManager.GetSettings()
+                };
+
+                // Serialize data
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+
+                string json = JsonSerializer.Serialize(appData, options);
+
+                // Save to file
+                File.WriteAllText(dataFilePath, json);
+
+                Console.WriteLine($"Data saved successfully to: {Path.GetFullPath(dataFilePath)}");
+                Console.WriteLine($"  - {appData.Trips.Count} trips");
+                Console.WriteLine($"  - {appData.Photos.Count} photos");
+                Console.WriteLine($"  - {appData.Expenses.Count} expenses");
+                Console.WriteLine($"  - {appData.Notes.Count} notes");
+                Console.WriteLine($"  - {appData.DailyLogs.Count} daily logs");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error saving data: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
-        
-        // Save trips to JSON file
-        static void SaveTrips()
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(tripManager.GetAllTrips(), options);
-                File.WriteAllText(tripsFilePath, json);
-                Console.WriteLine($"Vacations saved to: {Path.GetFullPath(tripsFilePath)}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving trips: {ex.Message}");
-            }
-        }
-        
-        // Load photos from JSON file
-        static void LoadPhotos()
-        {
-            try
-            {
-                if (File.Exists(photosFilePath))
-                {
-                    string json = File.ReadAllText(photosFilePath);
-                    var photos = JsonSerializer.Deserialize<List<Photo>>(json);
-                    photoManager.SetPhotos(photos);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading photos: {ex.Message}");
-            }
-        }
-        
-        // Save photos to JSON file
-        static void SavePhotos()
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(photoManager.GetAllPhotos(), options);
-                File.WriteAllText(photosFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving photos: {ex.Message}");
-            }
-        }
-        
-        // Load expenses from JSON file
-        static void LoadExpenses()
-        {
-            try
-            {
-                if (File.Exists(expensesFilePath))
-                {
-                    string json = File.ReadAllText(expensesFilePath);
-                    var expenses = JsonSerializer.Deserialize<List<Expense>>(json);
-                    expenseManager.SetExpenses(expenses);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading expenses: {ex.Message}");
-            }
-        }
-        
-        // Save expenses to JSON file
-        static void SaveExpenses()
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(expenseManager.GetAllExpenses(), options);
-                File.WriteAllText(expensesFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving expenses: {ex.Message}");
-            }
-        }
-        
-        // Load notes from JSON file
-        static void LoadNotes()
-        {
-            try
-            {
-                if (File.Exists(notesFilePath))
-                {
-                    string json = File.ReadAllText(notesFilePath);
-                    var notes = JsonSerializer.Deserialize<List<Note>>(json);
-                    noteManager.SetNotes(notes);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading notes: {ex.Message}");
-            }
-        }
-        
-        // Save notes to JSON file
-        static void SaveNotes()
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(noteManager.GetAllNotes(), options);
-                File.WriteAllText(notesFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving notes: {ex.Message}");
-            }
-        }
-        
-        // Load daily logs from JSON file
-        static void LoadDailyLogs()
-        {
-            try
-            {
-                if (File.Exists(dailyLogsFilePath))
-                {
-                    string json = File.ReadAllText(dailyLogsFilePath);
-                    var logs = JsonSerializer.Deserialize<List<DailyLogEntry>>(json);
-                    dailyLogManager.SetDailyLogs(logs);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading daily logs: {ex.Message}");
-            }
-        }
-        
-        // Save daily logs to JSON file
-        static void SaveDailyLogs()
-        {
-            try
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(dailyLogManager.GetAllDailyLogs(), options);
-                File.WriteAllText(dailyLogsFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving daily logs: {ex.Message}");
-            }
-        }
-        
+                
         // Show the main menu
         static void ShowMainMenu()
         {
             Console.Clear();
-            DrawHeader("VACATION TRACKER v1.0");
+            DrawHeader("Vacation Journal v1.0");
             
             var activeTrip = tripManager.GetActiveTrip();
             if (activeTrip != null)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Active Trip: {activeTrip.Name} ({activeTrip.Destination})");
+                Console.WriteLine($"Active Vacation: {activeTrip.Name} ({activeTrip.Destination})");
                 Console.ResetColor();
                 Console.WriteLine();
             }
             else if (tripManager.GetAllTrips().Count == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No trips added yet. Select 'Trip Management' to create your first trip!");
+                Console.WriteLine("No vacations added yet. Select 'Vacation Management' to create your first vacation!");
                 Console.ResetColor();
                 Console.WriteLine();
             }
             
-            Console.WriteLine("Use ↑/↓ arrow keys to navigate, Enter to select:");
+            Console.WriteLine("Use ↑/↓ arrow keys to navigate, ENTER to select:");
             Console.WriteLine();
         }
         
@@ -404,7 +253,7 @@ namespace VacationApp
             
             do
             {
-                // Get key press
+                // Get user selection/key press
                 key = Console.ReadKey(true).Key;
                 
                 // Handle arrow keys
@@ -522,7 +371,21 @@ namespace VacationApp
                     break;
                 case 6: // Exit
                     Console.Clear();
-                    Console.WriteLine("Thanks for using Vacation Tracker!");
+                    Console.WriteLine("Saving data before exiting...");
+
+                    // Save and show confirmation
+                    var tripCount = tripManager.GetAllTrips().Count;
+                    var photoCount = photoManager.GetAllPhotos().Count;
+                    var expenseCount = expenseManager.GetAllExpenses().Count;
+                    var noteCount = noteManager.GetAllNotes().Count;
+                    var logCount = dailyLogManager.GetAllDailyLogs().Count;
+
+                    Console.WriteLine($"Saving {tripCount} vacations, {photoCount} photos, {expenseCount} expenses, {noteCount} notes and {logCount} daily logs");
+                    
+                    SaveData();
+
+                    Console.WriteLine("\nPress any key to exit...");
+                    Console.ReadKey();                    
                     return false;
             }
             
@@ -536,10 +399,10 @@ namespace VacationApp
             DrawHeader(featureName.ToUpper());
             
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("You need to create a trip first before using this feature.");
+            Console.WriteLine("You need to create a vacation first before using this feature.");
             Console.ResetColor();
             
-            Console.WriteLine("\nWould you like to create a new trip now? (Y/N): ");
+            Console.WriteLine("\nWould you like to create a new vacation now? (Y/N): ");
             if (Console.ReadLine()?.ToUpper() == "Y")
             {
                 tripUI.ShowTripManagement();
@@ -556,10 +419,10 @@ namespace VacationApp
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("No active trip selected. Please select an active trip first.");
+            Console.WriteLine("No active vacation selected. Please select an active vacation first.");
             Console.ResetColor();
             
-            Console.WriteLine("\nWould you like to select an active trip now? (Y/N): ");
+            Console.WriteLine("\nWould you like to select an active vacation now? (Y/N): ");
             if (Console.ReadLine()?.ToUpper() == "Y")
             {
                 tripUI.ShowTripManagement();

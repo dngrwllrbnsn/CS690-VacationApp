@@ -11,7 +11,6 @@ namespace VacationApp.Settings
     {
         public string DefaultCurrency { get; set; } = "USD";
         public bool AutoSave { get; set; } = true;
-        public bool DarkMode { get; set; } = false;
         public string DataSavePath { get; set; } = "./data/";
         public Dictionary<string, object> CustomSettings { get; set; } = new Dictionary<string, object>();
     }
@@ -47,9 +46,6 @@ namespace VacationApp.Settings
                     break;
                 case "autosave":
                     settings.AutoSave = Convert.ToBoolean(value);
-                    break;
-                case "darkmode":
-                    settings.DarkMode = Convert.ToBoolean(value);
                     break;
                 case "datasavepath":
                     settings.DataSavePath = value.ToString();

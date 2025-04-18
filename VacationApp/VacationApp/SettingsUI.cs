@@ -25,7 +25,6 @@ namespace VacationApp.UI
                 Console.WriteLine("Current Settings:");
                 Console.WriteLine($"Default Currency: {settings.DefaultCurrency}");
                 Console.WriteLine($"Auto Save: {(settings.AutoSave ? "Enabled" : "Disabled")}");
-                Console.WriteLine($"Dark Mode: {(settings.DarkMode ? "Enabled" : "Disabled")}");
                 Console.WriteLine($"Data Save Path: {settings.DataSavePath}");
                 
                 if (settings.CustomSettings.Count > 0)
@@ -42,7 +41,6 @@ namespace VacationApp.UI
                 string[] options = {
                     "Change Default Currency",
                     "Toggle Auto Save",
-                    "Toggle Dark Mode",
                     "Change Data Save Path",
                     "Add Custom Setting",
                     "Reset to Defaults",
@@ -62,24 +60,19 @@ namespace VacationApp.UI
                     case 1: // toggle auto save
                         settingsManager.UpdateSetting("AutoSave", !settings.AutoSave);
                         break;
-                    case 2: // toggle dark mode
-                        settingsManager.UpdateSetting("DarkMode", !settings.DarkMode);
-                        ApplyColorScheme(settingsManager.GetSettings().DarkMode);
-                        break;
-                    case 3: // change data save path
+                    case 2: // change data save path
                         ChangeDataSavePath();
                         break;
-                    case 4: // add custom setting
+                    case 3: // add custom setting
                         AddCustomSetting();
                         break;
-                    case 5: // reset to defaults
+                    case 4: // reset to defaults
                         if (ConfirmReset())
                         {
                             settingsManager.ResetSettings();
-                            ApplyColorScheme(settingsManager.GetSettings().DarkMode);
                         }
                         break;
-                    case 6: // back to main menu
+                    case 5: // back to main menu
                         return;
                 }
             }

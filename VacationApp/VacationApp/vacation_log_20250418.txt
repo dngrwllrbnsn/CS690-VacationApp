@@ -1,7 +1,9 @@
 Daily Summary for April 18, 2025:
 
-- 2 expenses recorded ($138.24 USD)
+- 2 expenses recorded ($110.79 USD)
+- 1 note created
 
 Timeline:
-00:00 - Expense: 50 USD - Food - Lunch at the castle
-00:00 - Expense: 75 EUR - Transportation - Ferry from Antrim to Scotland
+00:00 - Expense: 45.89 GBP - Transportation - Ferry ride from Northern Ireland to Scotland
+00:00 - Expense: 34.99 GBP - Food - Lunch before taking ferry to Scotland.
+22:52 - Note: Ferry
