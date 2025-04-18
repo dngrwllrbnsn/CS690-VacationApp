@@ -1,0 +1,22 @@
+[
+  {
+    "Id": 1,
+    "Name": "Trip2",
+    "Destination": "Italy",
+    "StartDate": "2026-05-03T00:00:00",
+    "EndDate": "2026-05-08T00:00:00",
+    "IsActive": false,
+    "Notes": [],
+    "Expenses": []
+  },
+  {
+    "Id": 2,
+    "Name": "Eire",
+    "Destination": "Dingle, Co. Kerry, Ireland",
+    "StartDate": "2026-08-19T00:00:00",
+    "EndDate": "2026-09-05T00:00:00",
+    "IsActive": true,
+    "Notes": [],
+    "Expenses": []
+  }
+]
