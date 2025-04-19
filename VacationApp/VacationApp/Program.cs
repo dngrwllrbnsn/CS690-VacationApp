@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text.Json;
+using System.Text.Json; //data storage feature
+using Timer = System.Timers.Timer; //for auto-save feature
 using VacationApp.Trips;
 using VacationApp.Photos;
 using VacationApp.Expenses;
@@ -12,7 +13,6 @@ using VacationApp.UI;
 
 namespace VacationApp
 {
-
     // data container class to hold all app data
     public class AppData
     {
@@ -44,6 +44,11 @@ namespace VacationApp
         // data file path
         private static readonly string dataFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vacationapp_data.json");
         
+        //auto-save timer
+        private static Timer autoSaveTimer;
+        //1-min auto-save (60000ms)
+        private static readonly int autoSaveInterval = 60000;
+
         // main method
         static void Main(string[] args)
         {
@@ -56,6 +61,11 @@ namespace VacationApp
             InitializeUI();
             
             LoadData();
+
+            InitializeAutoSave();
+
+            //exit handler
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
             
             Console.Clear(); //Hide any loading messages
 
@@ -82,6 +92,70 @@ namespace VacationApp
                 }
             }
         }
+
+        // Initialize auto-save
+        static void InitializeAutoSave()
+        {
+            //configure timer
+            autoSaveTimer = new Timer(autoSaveInterval);
+            autoSaveTimer.Elapsed += OnAutoSaveTimerElapsed;
+            autoSaveTimer.AutoReset = true;
+            autoSaveTimer.Enabled = true;
+        }
+
+        //Auto-save time elapsed handler
+        private static void OnAutoSaveTimerElapsed(object source, System.Timers.ElapsedEventArgs e)
+        {
+            SilentAutoSave();
+        }
+
+        //save data without displaying messages to users
+        private static void SilentAutoSave()
+        {
+            try
+            {
+                //container object for all data
+                var appData = new AppData
+                {
+                    Trips = tripManager.GetAllTrips(),
+                    Photos = photoManager.GetAllPhotos(),
+                    Expenses = expenseManager.GetAllExpenses(),
+                    Notes = noteManager.GetAllNotes(),
+                    DailyLogs = dailyLogManager.GetAllDailyLogs(),
+                    Settings = settingsManager.GetSettings()
+                };
+
+                //serialize data
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+
+                string json = JsonSerializer.Serialize(appData, options);
+
+                //save to backup file
+                string backupFilePath = dataFilePath + ".backup";
+                File.WriteAllText(backupFilePath, json);
+
+                //on successful backup, replace main file
+                File.Copy(backupFilePath, dataFilePath, true);                
+            }
+            catch
+            {
+                //no ui messages if auto-save fails
+            }
+        }
+
+        //app exit handler
+        private static void OnProcessExit(object sender, EventArgs e)
+        {
+            //stop timer (don't interfere w/final save!)
+            autoSaveTimer.Stop();
+
+            //final save
+            SaveData();
+        }
+
         
         // Initialize all manager classes
         static void InitializeManagers()
