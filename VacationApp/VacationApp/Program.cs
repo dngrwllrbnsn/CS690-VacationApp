@@ -26,12 +26,12 @@ namespace VacationApp
     class Program
     {
         // Manager classes (data/business logic)
-        private static TripManager tripManager;
-        private static PhotoManager photoManager;
-        private static ExpenseManager expenseManager;
-        private static NoteManager noteManager;
-        private static DailyLogManager dailyLogManager;
-        private static SettingsManager settingsManager;
+        public static TripManager tripManager;
+        public static PhotoManager photoManager;
+        public static ExpenseManager expenseManager;
+        public static NoteManager noteManager;
+        public static DailyLogManager dailyLogManager;
+        public static SettingsManager settingsManager;
         
         // UI classes
         private static TripUI tripUI;
@@ -47,6 +47,8 @@ namespace VacationApp
         // main method
         static void Main(string[] args)
         {
+            Console.Clear(); //Clean start without warning messages
+
             Console.Title = "Vacation Journal";
             
             InitializeManagers();
@@ -55,6 +57,8 @@ namespace VacationApp
             
             LoadData();
             
+            Console.Clear(); //Hide any loading messages
+
             // Main application loop
             while (true)
             {
@@ -164,7 +168,7 @@ namespace VacationApp
         }
 
         // Save app data to JSON file
-        static void SaveData()
+        public static void SaveData()
         {
             try
             {

@@ -1,7 +1,6 @@
 {
   "DefaultCurrency": "USD",
   "AutoSave": true,
-  "DarkMode": false,
   "DataSavePath": "/workspaces/CS690-VacationApp/VacationApp/VacationApp/data/",
   "CustomSettings": {}
 }

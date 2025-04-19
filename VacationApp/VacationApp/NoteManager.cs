@@ -75,6 +75,12 @@ namespace VacationApp.Notes
             }
             return false;
         }
+
+        // delete all notes associated with a vacation that is deleted
+        public void DeleteNotesByTripId(int tripId)
+        {
+            notes.RemoveAll(note => note.TripId == tripId);
+        }
         
         // search notes by text
         public List<Note> SearchNotes(int tripId, string searchText)

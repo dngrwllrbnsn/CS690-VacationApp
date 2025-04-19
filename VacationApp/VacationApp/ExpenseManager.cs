@@ -88,6 +88,12 @@ namespace VacationApp.Expenses
             }
             return false;
         }
+
+        // delete all expenses associated with a deleted vacation
+        public void DeleteExpensesByTripId(int tripId)
+        {
+            expenses.RemoveAll(expense => expense.TripId == tripId);
+        }
         
         // calculate total expenses for a trip
         public decimal GetTotalExpenses(int tripId, string targetCurrency = "USD")

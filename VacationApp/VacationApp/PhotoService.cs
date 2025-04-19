@@ -162,6 +162,12 @@ namespace VacationApp.Photos
             return false;
         }
 
+        // Delete all photos associated with a deleted vacation
+        public void DeletePhotosByTripId(int tripId)
+        {
+            photos.RemoveAll(pic => pic.TripId == tripId);
+        }
+
         //JSON serialization: get all photos
         public List<Photo> GetAllPhotos()
         {

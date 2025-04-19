@@ -248,5 +248,11 @@ namespace VacationApp.DailyLog
                 }
             }
         }
+
+        // delete daily logs associated with a deleted vacation
+        public void DeleteDailyLogsByTripId(int tripId)
+        {
+            dailyLogs.RemoveAll(log => log.TripId == tripId);
+        }
     }
 }

@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using VacationApp.Photos;
+using VacationApp.Expenses;
+using VacationApp.Notes;
+using VacationApp.DailyLog;
 
 namespace VacationApp.Trips
 {    
@@ -88,12 +92,27 @@ namespace VacationApp.Trips
         }
 
         //delete a vacation
-        public bool DeleteTrip(int tripId)
+        public bool DeleteTrip(int tripId, PhotoManager photoManager, ExpenseManager expenseManager,
+                                NoteManager noteManager, DailyLogManager dailyLogManager)
         {
             var trip = GetTrip(tripId);
             if(trip != null)
             {
-                return trips.Remove(trip);
+                // delete all associated trip data
+                photoManager.DeletePhotosByTripId(trip.Id);
+                expenseManager.DeleteExpensesByTripId(trip.Id);
+                noteManager.DeleteNotesByTripId(trip.Id);
+                dailyLogManager.DeleteDailyLogsByTripId(trip.Id);
+
+                // delete the trip
+                bool result = trips.Remove(trip);
+
+                // if deleted trip was active trip, clear the active trip
+                //if(activeTrip != null && activeTrip.Id == trip.Id)
+                //{
+                //    activeTrip = null;
+                //}
+                //return result;
             }
             return false;
         }

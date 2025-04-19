@@ -405,25 +405,41 @@ namespace VacationApp.UI
             }
             
             Console.WriteLine($"\nAre you sure you want to delete vacation: \"{selectedTrip.Name}\"? (Y/N): ");
-            if (Console.ReadLine()?.ToUpper() == "Y")
+            string response = Console.ReadLine()?.ToUpper();
+
+            if (response == "Y")
             {
-                if (tripManager.DeleteTrip(tripId))
+                Console.WriteLine("\nThis will delete all photos, expenses, notes and daily logs associated with this vacation.");
+                Console.WriteLine("Are you absolutely sure? (Y/N): ");
+
+                if (Console.ReadLine()?.ToUpper() == "Y")
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("\nVacation deleted successfully!");
-                    Console.ResetColor();
+                    if (tripManager.DeleteTrip(tripId, Program.photoManager, Program.expenseManager,
+                                                Program.noteManager, Program.dailyLogManager))
+                    {
+                        // save data after deletion
+                        Program.SaveData();
+
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("\nVacation & all associated data deleted successfully!");
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("\nFailed to delete vacation.");
+                        Console.ResetColor();
+                    }
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\nFailed to delete vacation.");
-                    Console.ResetColor();
+                    Console.WriteLine("\nDelete operation cancelled.");
                 }
             }
             else
             {
                 Console.WriteLine("\nDelete operation cancelled.");
-            }
+            }    
             
             Console.WriteLine("\nPress any key to return to Vacation Management...");
             Console.ReadKey();

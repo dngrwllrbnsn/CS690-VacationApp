@@ -33,7 +33,7 @@ private readonly ExpenseManager expenseManager;
                     "View All Expenses",
                     "Add New Expense",
                     "Expense Summary",
-                    "Set Base Currency",
+                    "View/Edit Currency Exchange Rates",
                     "Back to Main Menu"
                 };
                 
@@ -53,8 +53,8 @@ private readonly ExpenseManager expenseManager;
                     case 2: // expense summary
                         ShowExpenseSummary(tripId, tripName);
                         break;
-                    case 3: // set base currency
-                        SetBaseCurrency();
+                    case 3: // set currency exchange rate
+                        SetCurrencyExchange();
                         break;
                     case 4: // back to main menu
                         return;
@@ -92,7 +92,7 @@ private readonly ExpenseManager expenseManager;
                                     $"{expense.Category,-11} | {expense.Description}");
                 }
                 
-                Console.WriteLine("\nEnter expense ID to view details (or 0 to go back): ");
+                Console.WriteLine("\nEnter expense ID to view details (or ENTER to cancel): ");
                 string input = Console.ReadLine();
                 
                 if (input == "0" || string.IsNullOrEmpty(input))
@@ -390,12 +390,12 @@ private readonly ExpenseManager expenseManager;
         }
         
         // set base currency
-        private void SetBaseCurrency()
+        private void SetCurrencyExchange()
         {
             Console.Clear();
-            DrawHeader("Set Preferred Currency");
+            DrawHeader("View/Edit Currency Exchange Rates");
             
-            Console.WriteLine("This feature allows you to update exchange rates.");
+            Console.WriteLine("This feature allows you to update or add exchange rates.");
             Console.WriteLine("\nCurrent Exchange Rates (base: USD):");
             
             foreach (var currency in expenseManager.GetAvailableCurrencies())
@@ -403,12 +403,12 @@ private readonly ExpenseManager expenseManager;
                 Console.WriteLine($"- {currency}");
             }
             
-            Console.Write("\nSelect currency to update: ");
+            Console.Write("\nSelect currency to update (or type in a new currency to add)(ENTER to cancel): ");
             string currencyInput = Console.ReadLine().ToUpper();
             
             if (!expenseManager.GetAvailableCurrencies().Contains(currencyInput))
             {
-                Console.Write("\nCurrency not located. Add new currency? (Y/N): ");
+                Console.Write($"\nWould you like to add {currencyInput} as new currency? (Y/N)(ENTER to cancel): ");
                 if (Console.ReadLine()?.ToUpper() != "Y")
                 {
                     Console.WriteLine("\nOperation cancelled.");
