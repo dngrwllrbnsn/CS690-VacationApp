@@ -42,7 +42,6 @@ namespace VacationApp.UI
                     "Change Default Currency",
                     "Toggle Auto Save",
                     "Change Data Save Path",
-                    "Add Custom Setting",
                     "Reset to Defaults",
                     "Back to Main Menu"
                 };
@@ -63,16 +62,13 @@ namespace VacationApp.UI
                     case 2: // change data save path
                         ChangeDataSavePath();
                         break;
-                    case 3: // add custom setting
-                        AddCustomSetting();
-                        break;
-                    case 4: // reset to defaults
+                    case 3: // reset to defaults
                         if (ConfirmReset())
                         {
                             settingsManager.ResetSettings();
                         }
                         break;
-                    case 5: // back to main menu
+                    case 4: // back to main menu
                         return;
                 }
             }
@@ -141,36 +137,6 @@ namespace VacationApp.UI
             Console.ReadKey();
         }
         
-        // add a custom setting
-        private void AddCustomSetting()
-        {
-            Console.Clear();
-            DrawHeader("Add a Custom Setting");
-            
-            Console.Write("Setting name: ");
-            string key = Console.ReadLine();
-            
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                Console.WriteLine("\nInvalid setting name. Operation cancelled.");
-                Console.WriteLine("\nPress any key to return...");
-                Console.ReadKey();
-                return;
-            }
-            
-            Console.Write("Setting value: ");
-            string value = Console.ReadLine();
-            
-            settingsManager.UpdateSetting(key, value);
-            
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\nCustom setting '{key}' added/updated successfully!");
-            Console.ResetColor();
-            
-            Console.WriteLine("\nPress any key to return...");
-            Console.ReadKey();
-        }
-        
         // confirm settings reset
         private bool ConfirmReset()
         {
@@ -181,23 +147,6 @@ namespace VacationApp.UI
             Console.Write("\nAre you sure you want to continue? (Y/N): ");
             
             return Console.ReadLine()?.ToUpper() == "Y";
-        }
-        
-        // Apply color scheme based on dark mode setting
-        private void ApplyColorScheme(bool darkMode)
-        {
-            if (darkMode)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-            else
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.Gray;
-            }
-            
-            Console.Clear();
         }
         
         // method to draw a header

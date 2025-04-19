@@ -50,17 +50,6 @@ namespace VacationApp.Settings
                 case "datasavepath":
                     settings.DataSavePath = value.ToString();
                     break;
-                default:
-                    // custom setting
-                    if (settings.CustomSettings.ContainsKey(key))
-                    {
-                        settings.CustomSettings[key] = value;
-                    }
-                    else
-                    {
-                        settings.CustomSettings.Add(key, value);
-                    }
-                    break;
             }
             
             // save changes
