@@ -21,8 +21,18 @@ namespace VacationApp.Photos
         //extract photo metadata
         public void ExtractMetadata()
         {
-            if(File.Exists(FilePath))
+            //try to find the file using helper 
+            string validPath;
+            bool fileExists = FileHelper.TryFindFile(FilePath, out validPath);
+
+            if(fileExists)
             {
+                //update path if it was corrected
+                if(validPath != FilePath)
+                {
+                    FilePath = validPath;
+                }
+
                 try
                 {
                     //read photo metadata and separate categories into groups
@@ -51,7 +61,12 @@ namespace VacationApp.Photos
                     CaptureDate = fileInfo.CreationTime;
                 }
             }
-        }
+            
+            else
+            {
+                CaptureDate = DateTime.Now;
+            }
+        }        
     }
 
     //class to handle photo operations

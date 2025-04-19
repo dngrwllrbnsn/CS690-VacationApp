@@ -1,6 +1,6 @@
 {
   "DefaultCurrency": "USD",
   "AutoSave": true,
-  "DataSavePath": "/workspaces/CS690-VacationApp/VacationApp/VacationApp/data/",
+  "DataSavePath": "./data/",
   "CustomSettings": {}
 }

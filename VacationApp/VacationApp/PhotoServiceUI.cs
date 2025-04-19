@@ -316,23 +316,30 @@ namespace VacationApp.UI
                 Console.ReadKey();
                 return;
             }
-            
-            // verify file path
-            if (!File.Exists(filePath))
+
+            string validPath;
+            bool fileFound = FileHelper.TryFindFile(filePath, out validPath);
+
+            //show message if filepath needed help
+            if (fileFound && validPath != filePath)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"\nFile found at: {validPath}");
+                Console.ResetColor();
+                filePath = validPath; //use fixed filepath
+            }
+
+            //if file wasn't found
+            else if(!fileFound)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("\nWarning: File does not exist at the specified path.");
+                Console.WriteLine("\nFile does not exist at the specified path.");
                 Console.ResetColor();
-                Console.Write("Do you want to continue anyway? (Y/N): ");
-                
-                if (Console.ReadLine()?.ToUpper() != "Y")
-                {
-                    Console.WriteLine("Operation cancelled. Press any key to continue...");
-                    Console.ReadKey();
-                    return;
-                }
+                Console.WriteLine("Operation cancelled. Press any key to continue...");
+                Console.ReadKey();
+                return;
             }
-            
+                      
             // add the photo
             var photo = photoManager.AddPhoto(tripId, filePath);
             
