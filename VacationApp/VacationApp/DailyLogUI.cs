@@ -10,6 +10,8 @@ namespace VacationApp.UI
     {
         private readonly DailyLogManager dailyLogManager;
         private readonly TripManager tripManager;
+        private DateTime currentDate;
+        private List<DateTime> datesWithActivity;
         
         public DailyLogUI(DailyLogManager dailyLogManager, TripManager tripManager)
         {
@@ -20,6 +22,58 @@ namespace VacationApp.UI
         // show the daily log main menu
         public void ShowDailyLogMenu(int tripId, string tripName)
         {
+            var tripDetails = tripManager.GetTrip(tripId);
+
+            //get all dates with items for this vacation
+            datesWithActivity = dailyLogManager.GetDatesWithActivity(tripId);
+
+            //for no dates, show a message
+            if(datesWithActivity.Count == 0)
+            {
+                Console.Clear();
+                DrawHeader($"Daily Log: {tripName}");
+                Console.WriteLine("No items recorded for this vacation yet.");
+                Console.WriteLine("\nPress any key to return to the main menu");
+                Console.ReadKey();
+                return;
+            }
+
+            //set current date as the most recent date with an item or today (if possible)
+            if(datesWithActivity.Contains(DateTime.Today))
+            {
+                currentDate = DateTime.Today;
+            }
+            else if (DateTime.Today > tripDetails.EndDate && datesWithActivity.Any())
+            {
+                //use the last date with activity
+                currentDate = datesWithActivity.Max();
+            }
+            else if (DateTime.Today < tripDetails.StartDate && datesWithActivity.Any())
+            {
+                //use the first date with activity
+                currentDate = datesWithActivity.Min();
+            }
+            else
+            {
+                //closest date to today that has activity items
+                var futureActivityDates = datesWithActivity.Where(date => date >= DateTime.Today).ToList();
+                var pastActivityDates = datesWithActivity.Where(date => date < DateTime.Today).ToList();
+
+                if (futureActivityDates.Any())
+                {
+                    currentDate = futureActivityDates.Min(); //closest future date
+                }
+                else if(pastActivityDates.Any())
+                {
+                    currentDate = pastActivityDates.Max(); //most recent past date
+                }
+                else
+                {
+                    //defer to vacation start date
+                    currentDate = tripDetails.StartDate;
+                }
+            }
+
             while (true)
             {
                 Console.Clear();
@@ -27,52 +81,132 @@ namespace VacationApp.UI
                 
                 var trip = tripManager.GetTrip(tripId);
                 
-                Console.WriteLine($"Trip Dates: {trip.StartDate:MMM d} - {trip.EndDate:MMM d, yyyy}");
+                Console.WriteLine($"Vacation Dates: {trip.StartDate:MMM d} - {trip.EndDate:MMM d, yyyy}");
                 Console.WriteLine();
-                
-                // get current date (default to today or trip end date if trip is in the past)
-                DateTime selectedDate = DateTime.Today;
-                if (selectedDate > trip.EndDate)
-                    selectedDate = trip.EndDate;
-                if (selectedDate < trip.StartDate)
-                    selectedDate = trip.StartDate;
-                
-                DisplayDailyLog(tripId, selectedDate);
-                
+
+                //display all dates with activity items
+                Console.WriteLine("Days with activities:");
+                int count = 0;
+                foreach(var date in datesWithActivity.OrderByDescending(date => date))
+                {
+                    //highligh current date
+                    if(date.Date == currentDate.Date)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"* {date: MMM d, yyyy}");
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"  {date: <MMM d, yyyy}");
+                    }
+
+                    count++;
+
+                    //limit # of dates displayed to make it user-friendly
+                    if(count >= 10)
+                    {
+                        if(datesWithActivity.Count > 10)
+                        {
+                            Console.WriteLine($"  ... and {datesWithActivity.Count-10} more");
+                        }
+                        break;
+                    }
+                }
+
+                Console.WriteLine();
+                DisplayDailyLog(tripId, currentDate);
+
                 string[] options = {
-                    "Previous Day",
-                    "Next Day",
+                    "Previous Day with Activity",
+                    "Next Day with Activity",
                     "Select Date",
                     "Edit Daily Log",
                     "Export Daily Log",
                     "Back to Main Menu"
                 };
-                
+
+                //disable navigation options if there are no previous/next days with activity
+                bool hasPrevious = dailyLogManager.GetPreviousActivityDate(tripId, currentDate).HasValue;
+                bool hasNext = dailyLogManager.GetNextActivityDate(tripId, currentDate).HasValue;
+
+                if (!hasPrevious)
+                {
+                    options[0] = "Previous Day with Activity (None)";
+                }
+
+                if(!hasNext)
+                {
+                    options[1] = "Next Day with Activity (None)";
+                }
+
                 Console.WriteLine("\nUse ↑/↓ arrow keys to navigate, ENTER to select:");
                 Console.WriteLine();
-                
+
                 int selectedOption = ShowMenu(options);
                 
                 switch (selectedOption)
                 {
                     case 0: // previous day
-                        selectedDate = selectedDate.AddDays(-1);
-                        if (selectedDate < trip.StartDate)
-                            selectedDate = trip.StartDate;
+                        var prevDate = dailyLogManager.GetPreviousActivityDate(tripId, currentDate);
+                        if (prevDate.HasValue)
+                        {
+                            currentDate = prevDate.Value;
+                        }
                         break;
                     case 1: // next day
-                        selectedDate = selectedDate.AddDays(1);
-                        if (selectedDate > trip.EndDate)
-                            selectedDate = trip.EndDate;
+                        var nextDate = dailyLogManager.GetNextActivityDate(tripId, currentDate);
+                        if (nextDate.HasValue)
+                        {
+                            currentDate = nextDate.Value;
+                        }
                         break;
                     case 2: // select date
-                        selectedDate = SelectDate(trip.StartDate, trip.EndDate);
+                        {
+                            var tripInfo = tripManager.GetTrip(tripId);
+                            
+                            // Initialize the date variable with the result from SelectDate
+                            DateTime selectedDate = SelectDate(tripInfo.StartDate, tripInfo.EndDate);
+                            
+                            // Check if the selected date has activity
+                            bool hasActivity = dailyLogManager.GetDailyTimeline(tripId, selectedDate).Count > 0;
+                            
+                            // If no activity and there are dates with activity, find closest one
+                            if (!hasActivity && datesWithActivity.Count > 0)
+                            {
+                                Console.WriteLine("\nNo activities recorded for the selected date.");
+                                Console.WriteLine("Finding closest date with activity...");
+                                
+                                // Find closest date manually
+                                DateTime closestDate = datesWithActivity[0];
+                                double closestDistance = Math.Abs((closestDate - selectedDate).TotalDays);
+                                
+                                for (int i = 1; i < datesWithActivity.Count; i++)
+                                {
+                                    double distance = Math.Abs((datesWithActivity[i] - selectedDate).TotalDays);
+                                    if (distance < closestDistance)
+                                    {
+                                        closestDistance = distance;
+                                        closestDate = datesWithActivity[i];
+                                    }
+                                }
+                                
+                                selectedDate = closestDate;
+                                Console.WriteLine($"Showing log for {selectedDate:MMM d, yyyy} instead.");
+                                Console.WriteLine("Press any key to continue...");
+                                Console.ReadKey();
+                            }
+                            
+                            // Update the current date
+                            currentDate = selectedDate;
+                        }
                         break;
+ 
                     case 3: // edit daily log
-                        EditDailyLog(tripId, selectedDate);
+                        EditDailyLog(tripId, currentDate);
                         break;
                     case 4: // export daily log
-                        ExportDailyLog(tripId, selectedDate);
+                        ExportDailyLog(tripId, currentDate);
                         break;
                     case 5: // back to main menu
                         return;
@@ -105,6 +239,19 @@ namespace VacationApp.UI
             DrawHeader("Select Date");
             
             Console.WriteLine($"Trip dates: {startDate:MMM d, yyyy} - {endDate:MMM d, yyyy}");
+
+            //display dates with activity
+            Console.WriteLine("\nDates with activity:");
+            foreach(var date in datesWithActivity.OrderBy(date => date).Take(10))
+            {
+                Console.WriteLine($"  {date: yyyy-MM-dd}");
+            }
+
+            if(datesWithActivity.Count > 10)
+            {
+                Console.WriteLine($"  ... and {datesWithActivity.Count - 10} more");
+            }
+
             Console.WriteLine("\nEnter date [YYYY-MM-DD]:");
             
             DateTime selectedDate;
